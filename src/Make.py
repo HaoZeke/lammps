@@ -766,7 +766,7 @@ class Packages(object):
     lib.remove("kokkos")
     lib.remove("user-molfile")
     lib.remove("python")
-    lib.remove("user-quip")
+    lib.remove("user-qui")
     all = std + user
     
     # plist = command line args expanded to yes-package or no-package
