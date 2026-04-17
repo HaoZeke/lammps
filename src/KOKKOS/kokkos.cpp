@@ -638,6 +638,8 @@ void KokkosLMP::accelerator(int narg, char **arg)
     } else if (strcmp(arg[iarg],"nbin/atoms/per/bin") == 0) {
       if (iarg+2 > narg) error->all(FLERR,"Illegal package kokkos command");
       nbin_atoms_per_bin = utils::inumeric(FLERR, arg[iarg+1], false, lmp);
+      if (nbin_atoms_per_bin <= 0)
+        error->all(FLERR,"Illegal package kokkos nbin/atoms/per/bin value: must be > 0");
       nbin_atoms_per_bin_set = 1;
       iarg += 2;
     } else if (strcmp(arg[iarg],"nbor/block/size") == 0) {
