@@ -109,7 +109,9 @@ FixDseams::FixDseams(LAMMPS *lmp, int narg, char **arg) :
     opt.cadence.every = 1;
     opt.debug_dump = dump_.empty() ? 0 : 1;
     eng_ = seams_insitu_create(&opt);
-    if (seams_insitu_open_record(eng_, record_.c_str()) == SEAMS_INSITU_OK) {
+    // depth outside 3..12 makes create return null. Do not open that pointer.
+    if (eng_ != nullptr &&
+        seams_insitu_open_record(eng_, record_.c_str()) == SEAMS_INSITU_OK) {
       opened = 1;
     }
   }
@@ -238,6 +240,7 @@ void FixDseams::end_of_step() {
     const int nall = atom->nlocal + atom->nghost;
     for (int ii = 0; ii < list_->inum; ++ii) {
       const int i = list_->ilist[ii];
+      // The full list holds every local atom. A subset group skips the rest.
       if (i < 0 || i >= atom->nlocal || (atom->mask[i] & groupbit) == 0) {
         continue;
       }
@@ -246,6 +249,7 @@ void FixDseams::end_of_step() {
       int *jlist = list_->firstneigh[i];
       for (int jj = 0; jj < list_->numneigh[i]; ++jj) {
         const int j = jlist[jj] & NEIGHMASK;
+        // A subset group still receives neighbours of other types. Drop them.
         if (j < 0 || j >= nall || (atom->mask[j] & groupbit) == 0) {
           continue;
         }
