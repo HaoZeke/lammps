@@ -1,6 +1,6 @@
-Copyright (c) d-SEAMS developers
-
 DSEAMS
+
+Contributing author: Rohit Goswami (rgoswami@ieee.org)
 
 fix dseams reads the running LAMMPS atoms and calls libyodaLib through
 seams_insitu.h. The header and the source are GPL-2.0-only because they
@@ -15,7 +15,8 @@ Enable the package with PKG_DSEAMS and pass the library location:
 The fix keyword host defaults to yes and uses the LAMMPS neighbour list.
 host no leaves that list unused so the engine builds its own.
 
-fix ID group dseams record PATH neigh PATH every N cutoff X depth N host yes|no
+fix ID group dseams record PATH neigh PATH every N cutoff X depth N
+host yes|no
 
 record is required. neigh is optional. Without neigh, no neighbour file
 is written. With neigh, each analysed step appends one block:
@@ -33,7 +34,8 @@ is written. With neigh, each analysed step appends one block:
 
 host 0 means that step built no list. A row starts with the central id.
 The other ids are the neighbours kept for the fix group. pbc uses the
-LAMMPS boundary code. Zero is periodic. The cutoff and the nine box numbers use %.17g.
+LAMMPS boundary code. Zero is periodic. The cutoff and the nine box
+numbers use %.17g.
 
 The separate CHILL+ compute, when built as a plugin, accepts
 
