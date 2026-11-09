@@ -353,14 +353,14 @@ void FixDseams::write_host(int step, int n, const double *xyz, const int *types,
                   xyz[3 * i], xyz[3 * i + 1], xyz[3 * i + 2]);
     out << line;
   }
-  int cursor = 0;
+  int flat_at = 0;
   for (int count : host_counts_) {
     out << "row";
     for (int k = 0; k < count; ++k) {
-      out << " " << host_flat_[static_cast<std::size_t>(cursor + k)];
+      out << " " << host_flat_[static_cast<std::size_t>(flat_at + k)];
     }
     out << "\n";
-    cursor += count;
+    flat_at += count;
   }
   out << "endframe\n";
 }
