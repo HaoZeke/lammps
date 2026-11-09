@@ -112,8 +112,7 @@ FixDseams::FixDseams(LAMMPS *lmp, int narg, char **arg) :
     }
   }
   MPI_Bcast(&opened, 1, MPI_INT, 0, lmp->world);
-  active_ = opened;
-}
+  active_ = opened; }
 
 FixDseams::~FixDseams() {
   seams_insitu_destroy(eng_);
@@ -225,17 +224,13 @@ void FixDseams::end_of_step() {
     const int nall = atom->nlocal + atom->nghost;
     for (int ii = 0; ii < list_->inum; ++ii) {
       const int i = list_->ilist[ii];
-      if (i < 0 || i >= atom->nlocal || (atom->mask[i] & groupbit) == 0) {
-        continue;
-      }
+      if (i < 0 || i >= atom->nlocal || (atom->mask[i] & groupbit) == 0) continue;
       const int begin = static_cast<int>(flat.size());
       flat.push_back(static_cast<int>(atom->tag[i]));
       int *jlist = list_->firstneigh[i];
       for (int jj = 0; jj < list_->numneigh[i]; ++jj) {
         const int j = jlist[jj] & NEIGHMASK;
-        if (j < 0 || j >= nall || (atom->mask[j] & groupbit) == 0) {
-          continue;
-        }
+        if (j < 0 || j >= nall || (atom->mask[j] & groupbit) == 0) continue;
         flat.push_back(static_cast<int>(atom->tag[j]));
       }
       if (static_cast<int>(flat.size()) > begin) {
