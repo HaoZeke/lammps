@@ -33,7 +33,7 @@ is written. With neigh, each analysed step appends one block:
 
 host 0 means that step built no list. A row starts with the central id.
 The other ids are the neighbours kept for the fix group. pbc uses the
-LAMMPS boundary code. Zero is periodic.
+LAMMPS boundary code. Zero is periodic. The nine box numbers use %.17g.
 
 The separate CHILL+ compute, when built as a plugin, accepts
 

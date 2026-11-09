@@ -340,9 +340,12 @@ void FixDseams::write_host(int step, int n, const double *xyz, const int *types,
   out << "frame\n";
   out << "step " << step << "\n";
   out << "cutoff " << cutoff_ << "\n";
-  out << "box " << domain->boxlo[0] << " " << domain->boxlo[1] << " " << domain->boxlo[2] << " "
-      << domain->prd[0] << " " << domain->prd[1] << " " << domain->prd[2] << " " << domain->xy << " "
-      << domain->xz << " " << domain->yz << "\n";
+  char box_line[320];
+  std::snprintf(box_line, sizeof(box_line),
+                "box %.17g %.17g %.17g %.17g %.17g %.17g %.17g %.17g %.17g\n",
+                domain->boxlo[0], domain->boxlo[1], domain->boxlo[2], domain->prd[0], domain->prd[1],
+                domain->prd[2], domain->xy, domain->xz, domain->yz);
+  out << box_line;
   out << "pbc " << domain->boundary[0][0] << " " << domain->boundary[1][0] << " "
       << domain->boundary[2][0] << "\n";
   out << "host " << (host_counts_.empty() ? 0 : 1) << "\n";
