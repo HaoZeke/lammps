@@ -701,9 +701,10 @@ if(PKG_DSEAMS)
   endif()
   target_include_directories(lammps PRIVATE "${SEAMS_INCLUDE}")
   target_link_libraries(lammps PRIVATE "${SEAMS_LIBRARY}")
+  target_link_libraries(lmp PRIVATE "${SEAMS_LIBRARY}")
   get_filename_component(_SEAMS_LIBDIR "${SEAMS_LIBRARY}" DIRECTORY)
-  set_property(TARGET lammps APPEND PROPERTY BUILD_RPATH "${_SEAMS_LIBDIR}")
-  set_property(TARGET lmp APPEND PROPERTY BUILD_RPATH "${_SEAMS_LIBDIR}")
+  target_link_options(lammps PRIVATE "LINKER:-rpath,${_SEAMS_LIBDIR}")
+  target_link_options(lmp PRIVATE "LINKER:-rpath,${_SEAMS_LIBDIR}" "LINKER:-rpath-link,${_SEAMS_LIBDIR}")
 endif()
 
 # dedicated check for entire contents of accelerator packages
