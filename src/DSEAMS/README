@@ -1,3 +1,5 @@
+Copyright (c) d-SEAMS developers
+
 DSEAMS
 
 fix dseams reads the running LAMMPS atoms and calls libyodaLib through
@@ -12,3 +14,32 @@ Enable the package with PKG_DSEAMS and pass the library location:
 
 The fix keyword host defaults to yes and uses the LAMMPS neighbour list.
 host no leaves that list unused so the engine builds its own.
+
+fix ID group dseams record PATH neigh PATH every N cutoff X depth N host yes|no
+
+record is required. neigh is optional. Without neigh, no neighbour file
+is written. With neigh, each analysed step appends one block:
+
+  frame
+  step STEP
+  cutoff X
+  box xlo ylo zlo lx ly lz xy xz yz
+  pbc bx by bz
+  host 0|1
+  atoms N
+  atom id type x y z
+  row id neighbour ...
+  endframe
+
+host 0 means that step built no list. A row starts with the central id.
+The other ids are the neighbours kept for the fix group. pbc uses the
+LAMMPS boundary code. Zero is periodic.
+
+The separate CHILL+ compute, when built as a plugin, accepts
+
+  compute ID group dseams file PATH cutoff X graph cutoff|mutual
+
+Without file, it writes no label file. With file, each evaluation
+appends one block of `label id type x y z code`. The code is 0 cubic,
+1 hexagonal, 2 water, 3 interfacial, 4 clathrate, 5 interClathrate,
+6 unclassified, 7 reCubic, 8 reHex.
