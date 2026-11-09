@@ -35,9 +35,6 @@ using namespace LAMMPS_NS;
 namespace {
 
 int parse_positive_int(const char *text, int *out) {
-  if (text == nullptr || text[0] == '\0') {
-    return 1;
-  }
   char *end = nullptr;
   const long value = std::strtol(text, &end, 10);
   if (end == text || *end != '\0' || value < 1 || value > 1000000) {
@@ -48,9 +45,6 @@ int parse_positive_int(const char *text, int *out) {
 }
 
 double parse_positive_double(const char *text, int *bad) {
-  if (text == nullptr || text[0] == '\0') {
-    return (*bad = 1), 0.0;
-  }
   char *end = nullptr;
   const double value = std::strtod(text, &end);
   if (end == text || *end != '\0' || !(value > 0.0)) {
@@ -115,8 +109,7 @@ FixDseams::FixDseams(LAMMPS *lmp, int narg, char **arg) :
     opt.cadence.every = 1;
     opt.debug_dump = dump_.empty() ? 0 : 1;
     eng_ = seams_insitu_create(&opt);
-    if (eng_ != nullptr &&
-        seams_insitu_open_record(eng_, record_.c_str()) == SEAMS_INSITU_OK) {
+    if (seams_insitu_open_record(eng_, record_.c_str()) == SEAMS_INSITU_OK) {
       opened = 1;
     }
   }
@@ -153,7 +146,7 @@ void FixDseams::setup(int) { end_of_step(); }
 
 void FixDseams::end_of_step() {
   const auto step64 = static_cast<long long>(update->ntimestep);
-  if (step64 < 0 || (step64 % every_) != 0) {
+  if ((step64 % every_) != 0) {
     return;
   }
   // setup runs at the first step of every run. A later run starts on the
@@ -181,18 +174,13 @@ void FixDseams::end_of_step() {
   const int kept = seams_insitu_pack_owned(
       nlocal, mask.data(), groupbit, local.data(), local_types.data(), local_ids.data(),
       kept_x.data(), kept_t.data(), kept_i.data());
-  if (kept < 0) {
-    return;
-  }
   const int nprocs = comm->nprocs;
   std::vector<int> counts(static_cast<std::size_t>(nprocs));
   std::vector<int> displs(static_cast<std::size_t>(nprocs));
   int nkept = kept;
   MPI_Allgather(&nkept, 1, MPI_INT, counts.data(), 1, MPI_INT, lmp->world);
   int total = 0;
-  if (seams_insitu_gather_displs(nprocs, counts.data(), displs.data(), &total) != 0) {
-    return;
-  }
+  seams_insitu_gather_displs(nprocs, counts.data(), displs.data(), &total);
   std::vector<int> xcounts(static_cast<std::size_t>(nprocs));
   std::vector<int> xdispls(static_cast<std::size_t>(nprocs));
   for (int rank = 0; rank < nprocs; ++rank) {
@@ -272,21 +260,17 @@ void FixDseams::end_of_step() {
     int local_flat = static_cast<int>(flat.size());
     MPI_Allgather(&local_rows, 1, MPI_INT, nrow_counts.data(), 1, MPI_INT, lmp->world);
     MPI_Allgather(&local_flat, 1, MPI_INT, nflat_counts.data(), 1, MPI_INT, lmp->world);
-    if (seams_insitu_gather_displs(nprocs, nrow_counts.data(), nrow_displs.data(), &nrows) != 0) {
-      return;
-    }
-    if (seams_insitu_gather_displs(nprocs, nflat_counts.data(), nflat_displs.data(), &nflat) != 0) {
-      return;
-    }
+    seams_insitu_gather_displs(nprocs, nrow_counts.data(), nrow_displs.data(), &nrows);
+    seams_insitu_gather_displs(nprocs, nflat_counts.data(), nflat_displs.data(), &nflat);
     all_counts.resize(static_cast<std::size_t>(std::max(nrows, 1)));
     all_flat.resize(static_cast<std::size_t>(std::max(nflat, 1)));
-    MPI_Gatherv(row_counts.empty() ? &ipad : row_counts.data(), local_rows, MPI_INT,
-                all_counts.data(), nrow_counts.data(), nrow_displs.data(), MPI_INT, 0, lmp->world);
-    MPI_Gatherv(flat.empty() ? &ipad : flat.data(), local_flat, MPI_INT, all_flat.data(),
-                nflat_counts.data(), nflat_displs.data(), MPI_INT, 0, lmp->world);
+    MPI_Gatherv(row_counts.data(), local_rows, MPI_INT, all_counts.data(), nrow_counts.data(),
+                nrow_displs.data(), MPI_INT, 0, lmp->world);
+    MPI_Gatherv(flat.data(), local_flat, MPI_INT, all_flat.data(), nflat_counts.data(),
+                nflat_displs.data(), MPI_INT, 0, lmp->world);
     built_x_.assign(kept_x.begin(), kept_x.begin() + static_cast<std::ptrdiff_t>(kept) * 3);
   }
-  if (comm->me != 0 || eng_ == nullptr) {
+  if (comm->me != 0) {
     return;
   }
   std::vector<int> order(static_cast<std::size_t>(total));
@@ -326,7 +310,7 @@ void FixDseams::end_of_step() {
   frame.local_only = 0;
   frame.rank = 0;
   frame.nranks = nprocs;
-  if (stale && want && nrows > 0 && nflat > 0) {
+  if (stale) {
     seams_insitu_set_neighbours(eng_, nrows, all_counts.data(), all_flat.data());
   }
   const char *dump = dump_.empty() ? nullptr : dump_.c_str();
