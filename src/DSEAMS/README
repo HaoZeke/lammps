@@ -1,0 +1,14 @@
+DSEAMS
+
+fix dseams reads the running LAMMPS atoms and calls libyodaLib through
+seams_insitu.h. The header and the source are GPL-2.0-only because they
+include LAMMPS headers. libyodaLib is not part of this package.
+
+Enable the package with PKG_DSEAMS and pass the library location:
+
+  -D PKG_DSEAMS=on
+  -D SEAMS_INCLUDE=<directory that contains seams_insitu.h>
+  -D SEAMS_LIBRARY=<path to libyodaLib.so>
+
+The fix keyword host defaults to yes and uses the LAMMPS neighbour list.
+host no leaves that list unused so the engine builds its own.
