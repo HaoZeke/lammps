@@ -42,7 +42,6 @@ class FixDseams : public Fix {
   void end_of_step() override;
 
  private:
-  int active_;
   int host_;
   int every_;
   int depth_;

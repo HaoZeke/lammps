@@ -12,6 +12,7 @@
 #include "atom.h"
 #include "comm.h"
 #include "domain.h"
+#include "error.h"
 #include "lammpsplugin.h"
 #include "neigh_list.h"
 #include "neigh_request.h"
@@ -62,7 +63,7 @@ double parse_positive_double(const char *text, int *bad) {
 } // namespace
 
 FixDseams::FixDseams(LAMMPS *lmp, int narg, char **arg) :
-    Fix(lmp, narg, arg), active_(0), host_(1), every_(1), depth_(8), cutoff_(3.5), seen_step_(-1),
+    Fix(lmp, narg, arg), host_(1), every_(1), depth_(8), cutoff_(3.5), seen_step_(-1),
     eng_(nullptr), list_(nullptr) {
   int iarg = 3;
   while (iarg < narg) {
@@ -74,22 +75,19 @@ FixDseams::FixDseams(LAMMPS *lmp, int narg, char **arg) :
       iarg += 2;
     } else if (std::strcmp(arg[iarg], "every") == 0 && iarg + 1 < narg) {
       if (parse_positive_int(arg[iarg + 1], &every_) != 0) {
-        active_ = 0;
-        return;
+        error->all(FLERR, "fix dseams: every must be a positive integer");
       }
       iarg += 2;
     } else if (std::strcmp(arg[iarg], "cutoff") == 0 && iarg + 1 < narg) {
       int bad = 0;
       cutoff_ = parse_positive_double(arg[iarg + 1], &bad);
       if (bad) {
-        active_ = 0;
-        return;
+        error->all(FLERR, "fix dseams: cutoff must be positive");
       }
       iarg += 2;
     } else if (std::strcmp(arg[iarg], "depth") == 0 && iarg + 1 < narg) {
       if (parse_positive_int(arg[iarg + 1], &depth_) != 0) {
-        active_ = 0;
-        return;
+        error->all(FLERR, "fix dseams: depth must be a positive integer");
       }
       iarg += 2;
     } else if (std::strcmp(arg[iarg], "host") == 0 && iarg + 1 < narg) {
@@ -98,18 +96,15 @@ FixDseams::FixDseams(LAMMPS *lmp, int narg, char **arg) :
       } else if (std::strcmp(arg[iarg + 1], "no") == 0) {
         host_ = 0;
       } else {
-        active_ = 0;
-        return;
+        error->all(FLERR, "fix dseams: host is yes or no");
       }
       iarg += 2;
     } else {
-      active_ = 0;
-      return;
+      error->all(FLERR, "Illegal fix dseams command");
     }
   }
   if (record_.empty()) {
-    active_ = 0;
-    return;
+    error->all(FLERR, "fix dseams: record is required");
   }
   int opened = 0;
   if (comm->me == 0) {
@@ -126,7 +121,10 @@ FixDseams::FixDseams(LAMMPS *lmp, int narg, char **arg) :
     }
   }
   MPI_Bcast(&opened, 1, MPI_INT, 0, lmp->world);
-  active_ = opened; }
+  if (opened == 0) {
+    error->all(FLERR, "fix dseams: record did not open");
+  }
+}
 
 FixDseams::~FixDseams() {
   seams_insitu_destroy(eng_);
@@ -140,9 +138,6 @@ int FixDseams::setmask() {
 }
 
 void FixDseams::init() {
-  if (!active_) {
-    return;
-  }
   list_ = nullptr;
   // stable_30Sep2026 dropped set_cutoff(). An analysis cutoff is the same
   // for every type pair, which is set_cutoff_fixed.
@@ -157,9 +152,6 @@ void FixDseams::init_list(int, NeighList *ptr) { list_ = ptr; }
 void FixDseams::setup(int) { end_of_step(); }
 
 void FixDseams::end_of_step() {
-  if (!active_) {
-    return;
-  }
   const auto step64 = static_cast<long long>(update->ntimestep);
   if (step64 < 0 || (step64 % every_) != 0) {
     return;
