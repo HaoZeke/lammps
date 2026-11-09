@@ -42,16 +42,21 @@ class FixDseams : public Fix {
   void end_of_step() override;
 
  private:
+  void write_host(int step, int n, const double *xyz, const int *types, const int *ids);
   int host_;
   int every_;
   int depth_;
+  int neigh_open_;
   long long seen_step_;
   double cutoff_;
   std::string dump_;
   std::string record_;
+  std::string neigh_;
   seams_insitu_engine *eng_;
   class NeighList *list_;
   std::vector<double> built_x_;
+  std::vector<int> host_counts_;
+  std::vector<int> host_flat_;
 };
 
 } // namespace LAMMPS_NS

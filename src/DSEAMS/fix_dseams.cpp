@@ -25,8 +25,10 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -57,8 +59,8 @@ double parse_positive_double(const char *text, int *bad) {
 } // namespace
 
 FixDseams::FixDseams(LAMMPS *lmp, int narg, char **arg) :
-    Fix(lmp, narg, arg), host_(1), every_(1), depth_(8), cutoff_(3.5), seen_step_(-1),
-    eng_(nullptr), list_(nullptr) {
+    Fix(lmp, narg, arg), host_(1), every_(1), depth_(8), neigh_open_(0), seen_step_(-1),
+    cutoff_(3.5), eng_(nullptr), list_(nullptr) {
   int iarg = 3;
   while (iarg < narg) {
     if (std::strcmp(arg[iarg], "dump") == 0 && iarg + 1 < narg) {
@@ -83,6 +85,9 @@ FixDseams::FixDseams(LAMMPS *lmp, int narg, char **arg) :
       if (parse_positive_int(arg[iarg + 1], &depth_) != 0) {
         error->all(FLERR, "fix dseams: depth must be a positive integer");
       }
+      iarg += 2;
+    } else if (std::strcmp(arg[iarg], "neigh") == 0 && iarg + 1 < narg) {
+      neigh_ = arg[iarg + 1];
       iarg += 2;
     } else if (std::strcmp(arg[iarg], "host") == 0 && iarg + 1 < narg) {
       if (std::strcmp(arg[iarg + 1], "yes") == 0) {
@@ -273,6 +278,10 @@ void FixDseams::end_of_step() {
     MPI_Gatherv(flat.data(), local_flat, MPI_INT, all_flat.data(), nflat_counts.data(),
                 nflat_displs.data(), MPI_INT, 0, lmp->world);
     built_x_.assign(kept_x.begin(), kept_x.begin() + static_cast<std::ptrdiff_t>(kept) * 3);
+    if (comm->me == 0) {
+      host_counts_.assign(all_counts.begin(), all_counts.begin() + nrows);
+      host_flat_.assign(all_flat.begin(), all_flat.begin() + nflat);
+    }
   }
   if (comm->me != 0) {
     return;
@@ -317,9 +326,43 @@ void FixDseams::end_of_step() {
   if (stale) {
     seams_insitu_set_neighbours(eng_, nrows, all_counts.data(), all_flat.data());
   }
+  if (!neigh_.empty()) {
+    write_host(static_cast<int>(step64), total, sorted_x.data(), sorted_t.data(), sorted_i.data());
+  }
   const char *dump = dump_.empty() ? nullptr : dump_.c_str();
   const int rc = seams_insitu_observe(eng_, &frame, dump);
   (void)rc;
+}
+
+void FixDseams::write_host(int step, int n, const double *xyz, const int *types, const int *ids) {
+  std::ofstream out(neigh_, neigh_open_ ? std::ios::app : std::ios::out);
+  neigh_open_ = 1;
+  out << "frame\n";
+  out << "step " << step << "\n";
+  out << "cutoff " << cutoff_ << "\n";
+  out << "box " << domain->boxlo[0] << " " << domain->boxlo[1] << " " << domain->boxlo[2] << " "
+      << domain->prd[0] << " " << domain->prd[1] << " " << domain->prd[2] << " " << domain->xy << " "
+      << domain->xz << " " << domain->yz << "\n";
+  out << "pbc " << domain->boundary[0][0] << " " << domain->boundary[1][0] << " "
+      << domain->boundary[2][0] << "\n";
+  out << "host " << (host_counts_.empty() ? 0 : 1) << "\n";
+  out << "atoms " << n << "\n";
+  for (int i = 0; i < n; ++i) {
+    char line[160];
+    std::snprintf(line, sizeof(line), "atom %d %d %.17g %.17g %.17g\n", ids[i], types[i],
+                  xyz[3 * i], xyz[3 * i + 1], xyz[3 * i + 2]);
+    out << line;
+  }
+  int cursor = 0;
+  for (int count : host_counts_) {
+    out << "row";
+    for (int k = 0; k < count; ++k) {
+      out << " " << host_flat_[static_cast<std::size_t>(cursor + k)];
+    }
+    out << "\n";
+    cursor += count;
+  }
+  out << "endframe\n";
 }
 
 #ifdef DSEAMS_LAMMPS_PLUGIN
