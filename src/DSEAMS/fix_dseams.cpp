@@ -339,7 +339,9 @@ void FixDseams::write_host(int step, int n, const double *xyz, const int *types,
   neigh_open_ = 1;
   out << "frame\n";
   out << "step " << step << "\n";
-  out << "cutoff " << cutoff_ << "\n";
+  char cutoff_line[64];
+  std::snprintf(cutoff_line, sizeof(cutoff_line), "cutoff %.17g\n", cutoff_);
+  out << cutoff_line;
   char box_line[320];
   std::snprintf(box_line, sizeof(box_line),
                 "box %.17g %.17g %.17g %.17g %.17g %.17g %.17g %.17g %.17g\n",
