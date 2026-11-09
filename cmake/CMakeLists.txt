@@ -704,7 +704,9 @@ if(PKG_DSEAMS)
   target_link_libraries(lmp PRIVATE "${SEAMS_LIBRARY}")
   get_filename_component(_SEAMS_LIBDIR "${SEAMS_LIBRARY}" DIRECTORY)
   target_link_options(lammps PRIVATE "LINKER:-rpath,${_SEAMS_LIBDIR}")
-  target_link_options(lmp PRIVATE "LINKER:-rpath,${_SEAMS_LIBDIR}" "LINKER:-rpath-link,${_SEAMS_LIBDIR}")
+  # libyodaLib carries chemfiles and the readers on its own runpath.
+  # The executable link does not search that runpath.
+  target_link_options(lmp PRIVATE "LINKER:-rpath,${_SEAMS_LIBDIR}" "LINKER:-rpath-link,${_SEAMS_LIBDIR}" "LINKER:--allow-shlib-undefined")
 endif()
 
 # dedicated check for entire contents of accelerator packages
