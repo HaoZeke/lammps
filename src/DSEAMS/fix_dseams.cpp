@@ -241,16 +241,21 @@ void FixDseams::end_of_step() {
   if (stale) {
     std::vector<int> row_counts;
     std::vector<int> flat;
-    if (want) {
+    // local_stale starts equal to want, and the later store of 0 sits inside
+    // if (want). stale is therefore 0 whenever want is 0, and this test is
+    // not reached with want equal to 0.
+    if (want) { // GCOVR_EXCL_BR_LINE
       neighbor->build_one(list_);
       const int nall = atom->nlocal + atom->nghost;
       for (int ii = 0; ii < list_->inum; ++ii) {
         const int i = list_->ilist[ii];
-        if (i < 0) {
-          continue; // builder stores i at or above zero
+        // npair writes ilist with i from 0 up to nlocal, so the true edge cannot run.
+        if (i < 0) { // GCOVR_EXCL_BR_LINE
+          continue; // GCOVR_EXCL_LINE the true edge above is the only way here
         }
-        if (i >= atom->nlocal) {
-          continue; // builder stores i below nlocal
+        // The same loop stores i below nlocal, so the true edge cannot run.
+        if (i >= atom->nlocal) { // GCOVR_EXCL_BR_LINE
+          continue; // GCOVR_EXCL_LINE the true edge above is the only way here
         }
         if ((atom->mask[i] & groupbit) == 0) {
           continue;
@@ -260,18 +265,22 @@ void FixDseams::end_of_step() {
         int *jlist = list_->firstneigh[i];
         for (int jj = 0; jj < list_->numneigh[i]; ++jj) {
           const int j = jlist[jj] & NEIGHMASK;
-          if (j < 0) {
-            continue; // NEIGHMASK keeps j at or above zero
+          // NEIGHMASK is 0x1FFFFFFF and clears the sign bit, so j cannot be negative.
+          if (j < 0) { // GCOVR_EXCL_BR_LINE
+            continue; // GCOVR_EXCL_LINE the true edge above is the only way here
           }
-          if (j >= nall) {
-            continue; // stencil stores j below nall
+          // The stencil stores j below nlocal + nghost, so the true edge cannot run.
+          if (j >= nall) { // GCOVR_EXCL_BR_LINE
+            continue; // GCOVR_EXCL_LINE the true edge above is the only way here
           }
           if ((atom->mask[j] & groupbit) == 0) {
             continue;
           }
           flat.push_back(static_cast<int>(atom->tag[j]));
         }
-        if (static_cast<int>(flat.size()) > begin) {
+        // begin is recorded, then the center tag is pushed, so the size is
+        // above begin whenever this comparison runs.
+        if (static_cast<int>(flat.size()) > begin) { // GCOVR_EXCL_BR_LINE
           row_counts.push_back(static_cast<int>(flat.size()) - begin);
         }
       }
