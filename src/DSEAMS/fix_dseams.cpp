@@ -257,10 +257,6 @@ void FixDseams::end_of_step() {
         int *jlist = list_->firstneigh[i];
         for (int jj = 0; jj < list_->numneigh[i]; ++jj) {
           const int j = jlist[jj] & NEIGHMASK;
-          // NEIGHMASK is 0x1FFFFFFF and clears the sign bit, so j cannot be negative.
-          if (j < 0) { // GCOVR_EXCL_BR_LINE
-            continue; // GCOVR_EXCL_LINE the true edge above is the only way here
-          }
           // The stencil stores j below nlocal + nghost, so the true edge cannot run.
           if (j >= nall) { // GCOVR_EXCL_BR_LINE
             continue; // GCOVR_EXCL_LINE the true edge above is the only way here
