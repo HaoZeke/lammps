@@ -241,28 +241,23 @@ void FixDseams::end_of_step() {
   if (stale) {
     std::vector<int> row_counts;
     std::vector<int> flat;
-    // local_stale starts equal to want, and the later store of 0 sits inside
-    // if (want). stale is therefore 0 whenever want is 0, and this test is
-    // not reached with want equal to 0.
-    if (want) { // GCOVR_EXCL_BR_LINE
-      neighbor->build_one(list_);
-      for (int ii = 0; ii < list_->inum; ++ii) {
-        const int i = list_->ilist[ii];
-        if ((atom->mask[i] & groupbit) == 0) {
+    neighbor->build_one(list_);
+    for (int ii = 0; ii < list_->inum; ++ii) {
+      const int i = list_->ilist[ii];
+      if ((atom->mask[i] & groupbit) == 0) {
+        continue;
+      }
+      const int begin = static_cast<int>(flat.size());
+      flat.push_back(static_cast<int>(atom->tag[i]));
+      int *jlist = list_->firstneigh[i];
+      for (int jj = 0; jj < list_->numneigh[i]; ++jj) {
+        const int j = jlist[jj] & NEIGHMASK;
+        if ((atom->mask[j] & groupbit) == 0) {
           continue;
         }
-        const int begin = static_cast<int>(flat.size());
-        flat.push_back(static_cast<int>(atom->tag[i]));
-        int *jlist = list_->firstneigh[i];
-        for (int jj = 0; jj < list_->numneigh[i]; ++jj) {
-          const int j = jlist[jj] & NEIGHMASK;
-          if ((atom->mask[j] & groupbit) == 0) {
-            continue;
-          }
-          flat.push_back(static_cast<int>(atom->tag[j]));
-        }
-        row_counts.push_back(static_cast<int>(flat.size()) - begin);
+        flat.push_back(static_cast<int>(atom->tag[j]));
       }
+      row_counts.push_back(static_cast<int>(flat.size()) - begin);
     }
     int local_rows = static_cast<int>(row_counts.size());
     int local_flat = static_cast<int>(flat.size());
