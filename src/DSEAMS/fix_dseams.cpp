@@ -249,10 +249,6 @@ void FixDseams::end_of_step() {
       const int nall = atom->nlocal + atom->nghost;
       for (int ii = 0; ii < list_->inum; ++ii) {
         const int i = list_->ilist[ii];
-        // npair writes ilist with i from 0 up to nlocal, so the true edge cannot run.
-        if (i < 0) { // GCOVR_EXCL_BR_LINE
-          continue; // GCOVR_EXCL_LINE the true edge above is the only way here
-        }
         // The same loop stores i below nlocal, so the true edge cannot run.
         if (i >= atom->nlocal) { // GCOVR_EXCL_BR_LINE
           continue; // GCOVR_EXCL_LINE the true edge above is the only way here
