@@ -246,7 +246,6 @@ void FixDseams::end_of_step() {
     // not reached with want equal to 0.
     if (want) { // GCOVR_EXCL_BR_LINE
       neighbor->build_one(list_);
-      const int nall = atom->nlocal + atom->nghost;
       for (int ii = 0; ii < list_->inum; ++ii) {
         const int i = list_->ilist[ii];
         if ((atom->mask[i] & groupbit) == 0) {
@@ -257,10 +256,6 @@ void FixDseams::end_of_step() {
         int *jlist = list_->firstneigh[i];
         for (int jj = 0; jj < list_->numneigh[i]; ++jj) {
           const int j = jlist[jj] & NEIGHMASK;
-          // The stencil stores j below nlocal + nghost, so the true edge cannot run.
-          if (j >= nall) { // GCOVR_EXCL_BR_LINE
-            continue; // GCOVR_EXCL_LINE the true edge above is the only way here
-          }
           if ((atom->mask[j] & groupbit) == 0) {
             continue;
           }
