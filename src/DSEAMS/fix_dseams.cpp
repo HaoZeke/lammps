@@ -246,10 +246,10 @@ void FixDseams::end_of_step() {
       for (int ii = 0; ii < list_->inum; ++ii) {
         const int i = list_->ilist[ii];
         if (i < 0) {
-          continue;
+          continue; // builder stores i at or above zero
         }
         if (i >= atom->nlocal) {
-          continue;
+          continue; // builder stores i below nlocal
         }
         if ((atom->mask[i] & groupbit) == 0) {
           continue;
@@ -260,10 +260,10 @@ void FixDseams::end_of_step() {
         for (int jj = 0; jj < list_->numneigh[i]; ++jj) {
           const int j = jlist[jj] & NEIGHMASK;
           if (j < 0) {
-            continue;
+            continue; // NEIGHMASK keeps j at or above zero
           }
           if (j >= nall) {
-            continue;
+            continue; // stencil stores j below nall
           }
           if ((atom->mask[j] & groupbit) == 0) {
             continue;
