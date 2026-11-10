@@ -261,11 +261,7 @@ void FixDseams::end_of_step() {
           }
           flat.push_back(static_cast<int>(atom->tag[j]));
         }
-        // begin is recorded, then the center tag is pushed, so the size is
-        // above begin whenever this comparison runs.
-        if (static_cast<int>(flat.size()) > begin) { // GCOVR_EXCL_BR_LINE
-          row_counts.push_back(static_cast<int>(flat.size()) - begin);
-        }
+        row_counts.push_back(static_cast<int>(flat.size()) - begin);
       }
     }
     int local_rows = static_cast<int>(row_counts.size());
