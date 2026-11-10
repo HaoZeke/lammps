@@ -245,9 +245,6 @@ void FixDseams::end_of_step() {
     neighbor->build_one(list_);
     for (int ii = 0; ii < list_->inum; ++ii) {
       const int i = list_->ilist[ii];
-      if (i < 0) {
-        continue;
-      }
       if ((atom->mask[i] & groupbit) == 0) {
         continue;
       }
