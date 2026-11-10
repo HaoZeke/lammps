@@ -241,7 +241,6 @@ void FixDseams::end_of_step() {
   if (stale) {
     std::vector<int> row_counts;
     std::vector<int> flat;
-    if (want) {
     neighbor->build_one(list_);
     for (int ii = 0; ii < list_->inum; ++ii) {
       const int i = list_->ilist[ii];
@@ -259,7 +258,6 @@ void FixDseams::end_of_step() {
         flat.push_back(static_cast<int>(atom->tag[j]));
       }
       row_counts.push_back(static_cast<int>(flat.size()) - begin);
-    }
     }
     int local_rows = static_cast<int>(row_counts.size());
     int local_flat = static_cast<int>(flat.size());
