@@ -1,3 +1,4 @@
+// Copyright (c) d-SEAMS developers
 /* d-SEAMS LAMMPS fix.
  *
  * This file includes LAMMPS headers and is distributed under GPL-2.0-only,
