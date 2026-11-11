@@ -306,6 +306,7 @@ set(STANDARD_PACKAGES
   DPD-REACT
   DPD-SMOOTH
   DRUDE
+  DSEAMS
   EFF
   ELECTRODE
   EXTRA-COMMAND
@@ -687,6 +688,26 @@ foreach(PKG ${STANDARD_PACKAGES})
 
   RegisterPackages(${${PKG}_SOURCES_DIR})
 endforeach()
+
+if(PKG_DSEAMS)
+  if(NOT SEAMS_INCLUDE OR NOT SEAMS_LIBRARY)
+    message(FATAL_ERROR "PKG_DSEAMS requires -D SEAMS_INCLUDE and -D SEAMS_LIBRARY")
+  endif()
+  if(NOT EXISTS "${SEAMS_INCLUDE}/seams_insitu.h")
+    message(FATAL_ERROR "SEAMS_INCLUDE has no seams_insitu.h: ${SEAMS_INCLUDE}")
+  endif()
+  if(NOT EXISTS "${SEAMS_LIBRARY}")
+    message(FATAL_ERROR "SEAMS_LIBRARY is not a file: ${SEAMS_LIBRARY}")
+  endif()
+  target_include_directories(lammps PRIVATE "${SEAMS_INCLUDE}")
+  target_link_libraries(lammps PRIVATE "${SEAMS_LIBRARY}")
+  target_link_libraries(lmp PRIVATE "${SEAMS_LIBRARY}")
+  get_filename_component(_SEAMS_LIBDIR "${SEAMS_LIBRARY}" DIRECTORY)
+  target_link_options(lammps PRIVATE "LINKER:-rpath,${_SEAMS_LIBDIR}")
+  # libyodaLib carries its readers on its own runpath.
+  # The executable link does not search that runpath.
+  target_link_options(lmp PRIVATE "LINKER:-rpath,${_SEAMS_LIBDIR}" "LINKER:-rpath-link,${_SEAMS_LIBDIR}" "LINKER:--allow-shlib-undefined")
+endif()
 
 # dedicated check for entire contents of accelerator packages
 foreach(PKG ${SUFFIX_PACKAGES})
